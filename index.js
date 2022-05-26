@@ -15,6 +15,7 @@ async function run() {
     try {
         await client.connect();
         const productsCollection = client.db('manufacter').collection('products');
+        const orderCollection = client.db('manufacter').collection('orders');
         // get all data 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -26,8 +27,28 @@ async function run() {
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
-            const product = await itemsCollection.findOne(query);
+            const product = await productsCollection.findOne(query);
             res.send(product);
+        })
+        // order get from ui 
+        app.post('/orders', async (req, res) => {
+            const data = req.body;
+            const order = await orderCollection.insertOne(data)
+            res.send(order);
+        })
+        // update avalaible stock 
+        app.put('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const update = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    stock: update.newAvailable
+                },
+            };
+            const result = await productsCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
         })
     }
     finally {
