@@ -16,6 +16,7 @@ async function run() {
         await client.connect();
         const productsCollection = client.db('manufacter').collection('products');
         const orderCollection = client.db('manufacter').collection('orders');
+        const profileCollection = client.db('manufacter').collection('profiles');
         // get all data 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -37,6 +38,13 @@ async function run() {
             const curser = orderCollection.find(query);
             const myOrder = await curser.toArray()
             res.send(myOrder);
+        })
+        // get profile data 
+        app.get('/profile', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const profile = await profileCollection.findOne(query);
+            res.send(profile)
         })
         // order get from ui 
         app.post('/order', async (req, res) => {
