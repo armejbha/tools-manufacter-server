@@ -30,6 +30,14 @@ async function run() {
             const product = await productsCollection.findOne(query);
             res.send(product);
         })
+        // get all order list 
+        app.get('/myOrder', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const curser = orderCollection.find(query);
+            const myOrder = await curser.toArray()
+            res.send(myOrder);
+        })
         // order get from ui 
         app.post('/orders', async (req, res) => {
             const data = req.body;
