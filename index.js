@@ -39,7 +39,7 @@ async function run() {
             res.send(myOrder);
         })
         // order get from ui 
-        app.post('/orders', async (req, res) => {
+        app.post('/order', async (req, res) => {
             const data = req.body;
             const order = await orderCollection.insertOne(data)
             res.send(order);
@@ -57,6 +57,13 @@ async function run() {
             };
             const result = await productsCollection.updateOne(filter, updateDoc, options);
             res.send(result);
+        })
+        // delete order 
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const deleted = await orderCollection.deleteOne(query);
+            res.send(deleted);
         })
     }
     finally {
