@@ -39,7 +39,7 @@ async function run() {
             const myOrder = await curser.toArray()
             res.send(myOrder);
         })
-        // get profile data 
+        // get profile data
         app.get('/profile', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -65,6 +65,38 @@ async function run() {
             };
             const result = await productsCollection.updateOne(filter, updateDoc, options);
             res.send(result);
+        })
+        //  user data update 
+        app.put('/profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const updateData = req.body;
+            const query = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: updateData.name,
+                    location: updateData.location,
+                    education: updateData.education,
+                    linkedin: updateData.linkedin,
+                    number: updateData.number
+                }
+            }
+            const result = await profileCollection.updateOne(query, updateDoc, options);
+            res.send(result)
+        })
+        // update profile imgage 
+        app.put('/picture/:email', async (req, res) => {
+            const email = req.params.email;
+            const updateData = req.body;
+            const query = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    img: updateData.img,
+                }
+            }
+            const result = await profileCollection.updateOne(query, updateDoc, options);
+            res.send(result)
         })
         // delete order 
         app.delete('/order/:id', async (req, res) => {
