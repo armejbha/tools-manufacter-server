@@ -17,6 +17,7 @@ async function run() {
         const productsCollection = client.db('manufacter').collection('products');
         const orderCollection = client.db('manufacter').collection('orders');
         const profileCollection = client.db('manufacter').collection('profiles');
+        const reviewCollection = client.db('manufacter').collection('reviews');
         // get all data 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -45,6 +46,13 @@ async function run() {
             const query = { email: email };
             const profile = await profileCollection.findOne(query);
             res.send(profile)
+        })
+        // get reviews 
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const curser = reviewCollection.find(query);
+            const reviews = await curser.toArray();
+            res.send(reviews);
         })
         // order get from ui 
         app.post('/order', async (req, res) => {
