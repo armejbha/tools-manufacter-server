@@ -60,6 +60,12 @@ async function run() {
             const order = await orderCollection.insertOne(data)
             res.send(order);
         })
+        // review post in database
+        app.post('/review', async (req, res) => {
+            const allData = req.body;
+            const review = await reviewCollection.insertOne(allData);
+            res.send(review);
+        })
         // update avalaible stock 
         app.put('/products/:id', async (req, res) => {
             const id = req.params.id;
