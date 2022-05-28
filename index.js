@@ -3,6 +3,7 @@ const app = express();
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const cors = require('cors');
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -37,6 +38,7 @@ async function run() {
         const profileCollection = client.db('manufacter').collection('profiles');
         const reviewCollection = client.db('manufacter').collection('reviews');
         const userCollection = client.db('manufacter').collection('users');
+        const paymentCollection = client.db('manufacter').collection('payments');
 
         const verifyAdmin = async (req, res, next) => {
             const requester = req.decoded.email;
@@ -63,7 +65,7 @@ async function run() {
             res.send(product);
         })
         // get all order list 
-        app.get('/myOrder', async (req, res) => {
+        app.get('/myOrder', verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const curser = orderCollection.find(query);
@@ -71,7 +73,7 @@ async function run() {
             res.send(myOrder);
         })
         // get profile data
-        app.get('/profile', async (req, res) => {
+        app.get('/profile', verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const profile = await profileCollection.findOne(query);
@@ -85,14 +87,14 @@ async function run() {
             res.send(reviews);
         })
         // get all orders 
-        app.get('/order', async (req, res) => {
+        app.get('/order', verifyToken, async (req, res) => {
             const query = {};
             const curser = orderCollection.find(query);
             const myOrder = await curser.toArray();
             res.send(myOrder);
         })
         // get all user 
-        app.get('/user', verifyToken, async (req, res) => {
+        app.get('/user', verifyToken, verifyToken, async (req, res) => {
             const query = {};
             const curser = userCollection.find(query)
             const user = await curser.toArray();
@@ -105,6 +107,13 @@ async function run() {
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin });
+        })
+        // single order 
+        app.get('/order/:id', verifyToken, async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) };
+            const myOrder = await orderCollection.findOne(query);
+            res.send(myOrder);
         })
         // order get from ui 
         app.post('/order', async (req, res) => {
@@ -122,6 +131,20 @@ async function run() {
             const productData = req.body;
             const result = await productsCollection.insertOne(productData);
             res.send(result);
+        })
+
+        app.post('/create-payment-intent', verifyToken, async (req, res) => {
+            const service = req.body;
+            const price = service.totalPrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ['card']
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            });
         })
         // update avalaible stock 
         app.put('/products/:id', async (req, res) => {
@@ -211,6 +234,22 @@ async function run() {
             const result = await userCollection.updateOne(query, updateDoc);
             return res.send(result);
         })
+
+        app.patch('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const query = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const result = await paymentCollection.insertOne(payment)
+            const updateOrder = await orderCollection.updateOne(query, updateDoc)
+            res.send(updateDoc)
+        })
+
         // delete order 
         app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
